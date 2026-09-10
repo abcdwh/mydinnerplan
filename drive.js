@@ -18,7 +18,7 @@
    승인된 원본에 등록된 도메인에서만 동작하기 때문이다.
 */
 
-const DRIVE_CLIENT_ID = "";   // ← 여기에 붙여넣으세요 (예: "1234-abcd.apps.googleusercontent.com")
+const DRIVE_CLIENT_ID = "592787399643-2j2henjbfik3vgpahrifkjam82a42gne.apps.googleusercontent.com";   // ← 여기에 붙여넣으세요 (예: "1234-abcd.apps.googleusercontent.com")
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
 const DRIVE_FILE = "dinner-table-state.json";
