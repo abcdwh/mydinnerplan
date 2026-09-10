@@ -1,0 +1,809 @@
+/* ── 폰트 ── */
+@font-face {
+  font-family: 'GangwonEducationModuche';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFLightA.woff') format('woff');
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GangwonEducationModuche';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFBoldA.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ── 토큰 ── */
+:root{
+  /* 4-tier green — 채도를 낮춘 자연스러운 녹색 */
+  --starbucks:#1b5e3b;
+  --accent:#2e7d5a;
+  --house:#1a3a2e;
+  --uplift:#3a6b56;
+  --green-light:#dceee6;
+  --green-soft:#e8f5ee;
+  --green-muted:#5a9a7c;
+  --green-wash:rgba(46,125,90,0.06);
+
+  /* 헤더 — 테마마다 배경과 글씨색이 따로 논다.
+     밝은 파스텔 헤더에서는 흰 글씨가 안 보이므로 글씨색까지 변수로 뺐다. */
+  --head-1:#1b5e3b;
+  --head-2:#2e7d5a;
+  --head-fg:#ffffff;
+  --head-fg-soft:rgba(255,255,255,0.75);
+
+  /* 강조색 위에 올라가는 글씨. 밝은 강조색 테마에서는 흰색 대신 진한 색이 온다 */
+  --on-accent:#ffffff;
+
+  /* 오늘의 메뉴 카드 — 옅은 바탕에 진한 글씨, 테두리는 금색 */
+  --hero-bg:#E7F2EB;
+  --hero-fg:#14321F;
+  --hero-fg-soft:#4B6557;
+  --hero-line:#C49A3C;
+  --hero-glow:rgba(196,154,60,0.10);
+
+  /* gold — 별점 전용 */
+  --gold:#c49a3c;
+  --gold-light:#dfc49d;
+
+  /* surface */
+  --canvas:#f4f2ed;
+  --ceramic:#edebe6;
+  --card:#ffffff;
+  --cool:#f9f9f7;
+
+  /* text */
+  --ink:rgba(0,0,0,0.87);
+  --soft:rgba(0,0,0,0.52);
+  --white:#ffffff;
+  --white-soft:rgba(255,255,255,0.75);
+
+  /* semantic */
+  --red:#c82014;
+  --red-tint:rgba(200,32,20,0.08);
+  --line:#d6dbde;
+
+  /* radius */
+  /* 아래는 예전 변수 이름을 현재 팔레트에 연결한 것.
+     나중에 추가된 탭바·검색·주 선택 CSS가 이 이름들을 쓴다. */
+  --bg:#f4f2ed;
+  --green:#1b5e3b;
+  --yolk:#c49a3c;
+  --kimchi:#c82014;
+
+  --pill:50px;
+  --card-r:14px;
+
+  /* shadow */
+  --card-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08);
+  --nav-shadow:0 1px 4px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --hero-shadow:0 4px 16px rgba(27,94,59,0.12), 0 1px 4px rgba(0,0,0,0.06);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0; background:var(--canvas); color:var(--ink);
+  font-family:'GangwonEducationModuche','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  font-weight:300;
+  letter-spacing:-0.01em;
+  -webkit-tap-highlight-color:transparent;
+  line-height:1.5;
+}
+
+/* ── 헤더 (글로벌 내비) — 녹색 배경 ── */
+header{
+  position:sticky; top:0; z-index:10;
+  background:linear-gradient(135deg, var(--head-1) 0%, var(--head-2) 100%);
+  display:flex; align-items:center; gap:10px;
+  padding:calc(env(safe-area-inset-top) + 16px) 20px 14px;
+  box-shadow:var(--nav-shadow);
+}
+#back{
+  background:none; border:none; font-size:22px; line-height:1;
+  color:var(--head-fg-soft); cursor:pointer; padding:0 8px 2px 0;
+  font-weight:700; transition:transform .2s ease;
+}
+#back:active{transform:scale(0.95)}
+h1{
+  font-size:22px; font-weight:700; margin:0;
+  color:var(--head-fg); letter-spacing:-0.02em;
+}
+
+/* ── 메인 ── */
+main{max-width:560px; margin:0 auto; padding:20px 16px 60px}
+
+/* ── 섹션 라벨 ── */
+h3.gh{
+  font-size:14px; font-weight:700; color:var(--soft);
+  margin:24px 0 8px; letter-spacing:0.02em; text-transform:uppercase;
+}
+
+/* ── 카드 ── */
+.card{
+  background:var(--card); border-radius:var(--card-r);
+  box-shadow:var(--card-shadow); overflow:hidden;
+}
+.card.pad{padding:16px}
+
+/* ── 텍스트 유틸리티 ── */
+.lead{font-size:15px; color:var(--soft); line-height:1.8; margin:0 0 16px}
+.lead.mt{margin-top:20px}
+.hint{font-size:13px; color:var(--soft); line-height:1.6; margin:8px 0 0}
+.dim{color:var(--soft); font-style:normal; font-size:13px}
+.alert{
+  background:var(--red-tint); border-radius:var(--card-r); padding:14px;
+  font-size:15px; line-height:1.7; margin:0 0 16px; color:var(--red);
+}
+.mt{margin-top:12px}
+
+/* ══════════════════════════════════
+   홈 — Hero 카드 (차별화된 녹색 그라데이션)
+   ══════════════════════════════════ */
+.hero{
+  background:var(--hero-bg);
+  border:1.5px solid var(--hero-line);
+  border-radius:var(--card-r);
+  box-shadow:var(--hero-shadow);
+  padding:31px 23px; text-align:center; margin-bottom:24px;
+  color:var(--hero-fg);
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:''; position:absolute; top:-30%; right:-20%;
+  width:200px; height:200px;
+  background:radial-gradient(circle, var(--hero-glow) 0%, transparent 70%);
+  border-radius:50%;
+}
+.hero.left{text-align:left; padding:27px 23px}
+.hero p{font-size:16px; line-height:1.85; color:var(--hero-fg-soft); margin:0 0 20px}
+.hero .k{
+  font-size:12px; font-weight:700; color:var(--hero-fg-soft);
+  letter-spacing:0.06em; text-transform:uppercase;
+}
+.hero h2{
+  font-size:30px; font-weight:700; margin:8px 0 10px;
+  color:var(--hero-fg); letter-spacing:-0.02em;
+}
+.hero .sub{font-size:15px; color:var(--hero-fg-soft); line-height:1.7}
+.hero .sub.mt{margin-top:14px; padding-top:14px; border-top:1px solid var(--hero-line)}
+/* 옅은 바탕 위에서는 채운 버튼이 오히려 눈에 띈다 */
+.hero .btn{
+  background:var(--accent); color:var(--on-accent);
+  border-color:var(--accent);
+}
+
+/* 홈 내비 메뉴 — 2×3 아이콘 그리드 */
+.grid-menu{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.grid-item{
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:6px;
+  background:var(--white);
+  border:none;
+  border-radius:var(--card-r);
+  box-shadow:var(--card-shadow);
+  padding:24px 12px 18px;
+  cursor:pointer; text-align:center;
+  font-family:inherit; font-weight:300;
+  transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+  position:relative;
+  overflow:hidden;
+}
+.grid-item::before{
+  content:''; position:absolute; top:-30px; right:-30px;
+  width:100px; height:100px;
+  background:radial-gradient(circle, rgba(46,125,90,0.04) 0%, transparent 70%);
+  border-radius:50%;
+}
+.grid-item:active{transform:scale(0.96); box-shadow:0 0 1px rgba(0,0,0,0.1)}
+.grid-item:hover{
+  background:var(--green-soft);
+  box-shadow:0 4px 12px rgba(27,94,59,0.10);
+}
+.gi-icon{
+  font-size:32px;
+  color:var(--starbucks);
+  background:rgba(46,125,90,0.1);
+  width:56px; height:56px;
+  border-radius:16px;
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .2s ease, background .2s ease;
+}
+.grid-item:hover .gi-icon{
+  transform:scale(1.08);
+  background:rgba(46,125,90,0.15);
+}
+.gi-label{
+  font-size:15px; font-weight:700;
+  color:var(--starbucks);
+  letter-spacing:-0.01em;
+  margin-top:4px;
+}
+.gi-sub{
+  font-size:12.5px;
+  color:var(--uplift);
+  opacity:0.8;
+}
+
+/* ══════════════════════════════════
+   주간 식단
+   ══════════════════════════════════ */
+.bar{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-size:14px; color:var(--soft); margin-bottom:14px;
+}
+.tot{font-weight:700; color:var(--starbucks)}
+
+/* ══════════════════════════════════
+   주간 식단 — 요일 행 (라벨 + 콘텐츠)
+   ══════════════════════════════════ */
+.week-list{
+  display:flex; flex-direction:column; gap:10px;
+}
+.day-row{
+  display:flex; gap:10px; align-items:stretch;
+}
+
+/* 요일 라벨 — 항상 고정 위치 */
+.day-label{
+  width:44px; flex-shrink:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:8px 0;
+  user-select:none; -webkit-user-select:none;
+}
+.day-label b{
+  display:block; font-size:22px; font-weight:700; line-height:1;
+  color:var(--starbucks);
+}
+.day-label i{
+  display:block; font-size:10px; color:var(--soft); font-style:normal; margin-top:4px;
+}
+.day-label.today b{
+  color:var(--white);
+  background:var(--starbucks); border-radius:50%;
+  width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+}
+
+/* 메뉴 콘텐츠 카드 */
+.day-content{
+  flex:1; min-width:0;
+  background:var(--card); border-radius:var(--card-r);
+  box-shadow:var(--card-shadow);
+  overflow:hidden;
+  border-left:4px solid var(--accent);
+  transition:transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  position:relative;
+  user-select:none; -webkit-user-select:none;
+}
+.day-content.반찬{border-left-color:var(--gold)}
+.day-content.외식{border-left-color:var(--soft)}
+.day-content.today{outline:2px solid var(--starbucks); background:var(--green-wash)}
+
+/* 드래그 핸들 — 재생목록 느낌 */
+.drag-handle{
+  position:absolute; top:0; right:0;
+  width:36px; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; color:var(--line); letter-spacing:2px;
+  cursor:grab; z-index:2;
+  transition:color 0.2s ease, background 0.2s ease;
+  border-radius:0 var(--card-r) var(--card-r) 0;
+  user-select:none; -webkit-user-select:none;
+}
+.drag-handle:hover{
+  color:var(--accent);
+  background:var(--green-wash);
+}
+.drag-handle:active{cursor:grabbing}
+
+.dhead{
+  display:flex; gap:14px; width:100%; background:none; border:none;
+  padding:14px 42px 14px 14px; cursor:pointer; text-align:left;
+  font-family:inherit; font-weight:300; align-items:flex-start;
+}
+.dbody{flex:1; min-width:0}
+.mn{font-size:16px; font-weight:700; color:var(--ink)}
+.mn.dim{font-weight:300; color:var(--soft)}
+.sb{font-size:13.5px; color:var(--soft); margin-top:4px; line-height:1.5}
+.dmeta{font-size:13px; color:var(--soft); text-align:right; flex-shrink:0; line-height:1.6}
+
+/* 요일 상세 */
+.detail{padding:0 16px 16px; border-top:1px solid var(--line); margin:0 16px 0 0}
+.note{font-size:14px; color:var(--accent); margin:12px 0; line-height:1.7}
+.rec{margin:14px 0}
+.rec b{font-size:15px; color:var(--starbucks)}
+.rec ol{margin:8px 0 0; padding-left:18px; font-size:14px; color:var(--soft); line-height:1.9}
+.ings{font-size:13.5px; color:var(--soft); line-height:1.8; margin-top:8px}
+.tip{font-size:13px; color:var(--accent); margin-top:6px}
+
+/* 슬롯 (국/메인/곁들임 교체) */
+.slots{border-top:1px solid var(--line); margin-top:14px; padding-top:10px}
+.slot{display:flex; align-items:center; gap:8px; padding:5px 0}
+.sl{width:44px; font-size:13px; color:var(--soft); flex-shrink:0; font-weight:700}
+.sn{flex:1; font-size:15px}
+.sn.dim{font-size:15px; color:var(--soft)}
+.acts{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
+
+/* ══════════════════════════════════
+   드래그 앤 드롭 — 재생목록 스타일
+   ══════════════════════════════════ */
+
+/* 드래그 중인 클론 */
+.day-content.dragging{
+  position:fixed;
+  z-index:100;
+  opacity:0.92;
+  transform:scale(1.04) rotate(0.8deg);
+  box-shadow:0 16px 40px rgba(27,94,59,0.22), 0 4px 12px rgba(0,0,0,0.12);
+  pointer-events:none;
+  transition:none;
+  border-left-width:4px;
+}
+
+/* 원래 위치 (반투명) */
+.day-content.drag-origin{
+  opacity:0.3;
+  transform:scale(0.97);
+  border-style:dashed;
+}
+
+/* 드롭 대상 하이라이트 */
+.day-content.drop-target{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  background:var(--green-wash);
+  transform:scale(1.01);
+  box-shadow:0 0 0 4px rgba(46,125,90,0.12), var(--card-shadow);
+}
+
+/* ══════════════════════════════════
+   장보기 목록
+   ══════════════════════════════════ */
+.li{
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px; border-bottom:1px solid var(--canvas); cursor:pointer;
+}
+.li:last-child{border-bottom:none}
+.li.have{opacity:.38; cursor:default}
+
+/* 냉장고 아이템 */
+.li.fr{
+  background:var(--card); border-radius:var(--card-r);
+  box-shadow:var(--card-shadow);
+  margin-bottom:8px; border-left:4px solid var(--accent); border-bottom:none;
+}
+.li.fr.soon{border-left-color:var(--gold)}
+.li.fr.bad{border-left-color:var(--red)}
+.ln{flex:1; font-size:16px; min-width:0}
+.ln b{font-weight:700}
+.ln i{display:block; margin-top:3px}
+.lq{font-size:14px; color:var(--soft); text-align:right; flex-shrink:0; line-height:1.5}
+.warn{color:var(--red); font-size:12.5px; font-style:normal}
+
+/* 체크박스 */
+.cb{
+  width:20px; height:20px; border-radius:var(--pill);
+  border:2px solid var(--line); flex-shrink:0;
+  transition:all .2s ease;
+}
+.cb.on{background:var(--accent); border-color:var(--accent); position:relative}
+.cb.on::after{content:"✓"; color:#fff; font-size:12px; position:absolute; left:3px; top:0px; font-weight:700}
+.x{background:none; border:none; color:var(--soft); font-size:18px; cursor:pointer; padding:0 4px; font-family:inherit}
+
+/* ══════════════════════════════════
+   메뉴 관리
+   ══════════════════════════════════ */
+.tabs{
+  display:flex; gap:6px; margin-bottom:14px; align-items:center;
+}
+.tb{
+  background:var(--ceramic); border:1px solid var(--line); border-radius:var(--pill);
+  padding:9px 18px; font-size:14px; font-weight:600;
+  color:var(--soft); cursor:pointer; font-family:inherit;
+  transition:background .15s ease, color .15s ease;
+}
+.tb.on{
+  background:var(--starbucks); border-color:var(--starbucks);
+  color:#fff; font-weight:700;
+}
+/* 테마·백업 — 식단이 아니라 앱 설정. 오른쪽에 나란히 두고 색으로 구분한다 */
+.tb.alt2{
+  margin-left:auto; background:var(--green-light); border:1px solid var(--green-light);
+  color:var(--starbucks); font-weight:600;
+}
+.tb.alt2.on{
+  background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:700;
+}
+.tb.alt{
+  background:#8A8A82; border:1px solid #8A8A82;
+  color:#fff; font-weight:600;
+}
+.tb.alt.on{
+  background:#4A4A44; border-color:#4A4A44; color:#fff; font-weight:700;
+}
+
+.mi{border-bottom:1px solid var(--canvas)}
+.mi:last-child{border-bottom:none}
+.mi.off{opacity:.35}
+.mrow{display:flex; align-items:center; gap:10px; padding:12px 16px}
+.mname{
+  flex:1; text-align:left; background:none; border:none;
+  font-size:16px; cursor:pointer; font-family:inherit; color:var(--ink); padding:0;
+  font-weight:300;
+}
+.tag{font-size:12px; color:var(--accent); font-style:normal; margin-left:6px; font-weight:700}
+.tag.star{color:var(--gold)}
+.hb{
+  background:none; border:none; font-size:16px; color:var(--line);
+  cursor:pointer; padding:0 3px; transition:all .2s ease;
+}
+.hb.on{color:var(--red)}
+.mdet{padding:0 16px 14px}
+.mdet ol{margin:10px 0 0; padding-left:18px; font-size:14px; color:var(--soft); line-height:1.9}
+.pin{
+  width:78px; text-align:right; padding:8px 10px; font-size:13px;
+  border:1px solid var(--line); border-radius:var(--pill);
+  background:var(--canvas); font-family:inherit; color:var(--ink);
+}
+
+/* ══════════════════════════════════
+   지난 메뉴
+   ══════════════════════════════════ */
+.wk{
+  background:var(--card); border-radius:var(--card-r);
+  box-shadow:var(--card-shadow);
+  margin-bottom:10px; overflow:hidden;
+}
+.whead{
+  display:flex; justify-content:space-between; align-items:center; width:100%;
+  background:none; border:none; padding:16px; cursor:pointer;
+  font-family:inherit; text-align:left; font-size:16px; color:var(--ink);
+  font-weight:300;
+}
+.whead b{font-weight:700; color:var(--starbucks)}
+.whead i{display:block; margin-top:4px}
+.wbody{padding:0 16px 14px}
+.wd{
+  display:flex; align-items:center; gap:10px; padding:9px 0;
+  border-top:1px solid var(--canvas);
+}
+.wdd{width:24px; font-size:14px; font-weight:700; color:var(--starbucks); flex-shrink:0}
+.wdn{flex:1; font-size:14px; line-height:1.5}
+
+/* 별점 */
+.strs{flex-shrink:0}
+.star{
+  background:none; border:none; font-size:17px; color:var(--line);
+  cursor:pointer; padding:0 1px; font-family:inherit;
+  transition:color .15s ease;
+}
+.star.on{color:var(--gold)}
+
+/* ══════════════════════════════════
+   폼 입력
+   ══════════════════════════════════ */
+input,select,textarea{
+  font-family:inherit; font-size:15px; padding:10px 12px;
+  border-radius:8px; border:1px solid var(--line);
+  background:var(--canvas); color:var(--ink); width:100%;
+  transition:border-color .2s ease;
+  font-weight:300;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none; border-color:var(--accent);
+}
+textarea{resize:vertical}
+.frow{display:flex; gap:6px; align-items:center; margin-bottom:8px; font-size:14px; color:var(--soft)}
+.w50{width:50px; flex-shrink:0}
+.w70{width:70px; flex-shrink:0}
+.w80{width:82px; flex-shrink:0}
+.fl{font-size:14px; color:var(--soft); margin:14px 0 8px; font-weight:700}
+
+/* 필 토글 */
+.pills{display:flex; gap:6px}
+.pill{
+  flex:1; padding:9px 0; font-size:13.5px;
+  border-radius:var(--pill); border:1px solid var(--line);
+  background:transparent; color:var(--soft); cursor:pointer;
+  font-family:inherit; font-weight:300;
+  transition:all .2s ease;
+}
+.pill:active{transform:scale(0.95)}
+.pill.on{background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:700}
+
+/* ══════════════════════════════════
+   버튼 — 50px pill, scale(0.95) active
+   ══════════════════════════════════ */
+.btn{
+  background:var(--accent); color:var(--on-accent); border:1px solid var(--accent);
+  padding:12px 24px; border-radius:var(--pill);
+  font-size:16px; font-weight:700; cursor:pointer; font-family:inherit;
+  letter-spacing:-0.01em;
+  transition:all .2s ease;
+}
+.btn:active{transform:scale(0.95)}
+.btn.ghost{
+  background:rgba(46,125,90,0.06); color:var(--accent);
+  border:1px solid var(--accent);
+}
+.btn.ghost:hover{background:var(--green-light)}
+.btn.small{padding:9px 16px; font-size:14px}
+.mini{
+  background:var(--card); border:1px solid var(--line); color:var(--accent);
+  padding:7px 14px; border-radius:var(--pill);
+  font-size:13px; cursor:pointer; font-family:inherit;
+  font-weight:300; transition:all .2s ease;
+}
+.mini:active{transform:scale(0.95)}
+.mini:hover{background:rgba(46,125,90,0.12); border-color:var(--accent); color:var(--starbucks)}
+
+/* ══════════════════════════════════
+   바텀 시트 (메뉴 피커)
+   ══════════════════════════════════ */
+#sheet{display:none}
+#sheet.on{
+  display:flex; position:fixed; inset:0;
+  background:rgba(26,58,46,0.5);
+  align-items:flex-end; justify-content:center; z-index:30;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+.sbox{
+  background:var(--canvas); width:100%; max-width:560px;
+  max-height:82vh; overflow-y:auto;
+  border-radius:var(--card-r) var(--card-r) 0 0;
+  padding:16px 16px calc(env(safe-area-inset-bottom) + 16px);
+}
+.shead{
+  display:flex; justify-content:space-between; align-items:center;
+  position:sticky; top:0; background:var(--canvas);
+  padding-bottom:12px; font-size:18px; font-weight:700;
+  color:var(--starbucks);
+}
+.pk{
+  display:block; width:100%; text-align:left;
+  background:var(--card); border:none; border-radius:var(--card-r);
+  box-shadow:var(--card-shadow);
+  padding:14px 16px; margin-bottom:8px; cursor:pointer;
+  font-family:inherit; font-weight:300;
+  transition:transform .2s ease;
+}
+.pk:active{transform:scale(0.98)}
+.pn{font-size:16px; font-weight:700; margin-right:8px; color:var(--starbucks)}
+.pi{display:block; font-size:13px; color:var(--soft); margin-top:5px; line-height:1.6}
+
+/* ══════════════════════════════════
+   토스트
+   ══════════════════════════════════ */
+#toast{
+  position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+  background:var(--house); color:var(--white);
+  padding:12px 24px; border-radius:var(--pill);
+  font-size:15px; font-weight:700; letter-spacing:-0.01em;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);
+  opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:40;
+}
+#toast.on{opacity:1}
+
+/* ── 백업 ── */
+.stat{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
+.stat span{font-size:14px;font-weight:700}
+.stat i{display:block;font-size:11.5px;font-weight:400;color:var(--soft);font-style:normal;margin-bottom:2px}
+#impfile{padding:9px;font-size:13px;background:var(--bg);border:1px dashed var(--line);border-radius:6px;width:100%}
+#impfile::file-selector-button{font-family:inherit;font-size:12.5px;padding:6px 11px;margin-right:9px;
+  border:1px solid var(--line);border-radius:5px;background:var(--card);color:var(--ink);cursor:pointer}
+.bkup{display:block;width:100%;text-align:left;background:transparent;border:1px dashed var(--line);
+  border-radius:8px;padding:12px 14px;margin-bottom:14px;font-family:inherit;font-size:13px;
+  color:var(--soft);cursor:pointer;line-height:1.6}
+
+/* ── 드래그 중 브라우저 기본 동작 차단 ── */
+html, body{
+  overscroll-behavior-y:contain;      /* 당겨서 새로고침 방지 */
+}
+.drag-handle{
+  touch-action:none;                  /* 이 손잡이 위에서는 스크롤·확대를 넘기지 않는다 */
+  -webkit-user-select:none; user-select:none;
+  -webkit-touch-callout:none;         /* 길게 누르기 메뉴 방지 */
+}
+.day-content{
+  -webkit-touch-callout:none;
+}
+.day-content.dragging{
+  pointer-events:none;                /* 클론이 드롭 판정을 가로채지 않게 */
+}
+
+/* ══════════ 하단 탭바 ══════════ */
+#tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:20;
+  display:flex; background:var(--card); border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+#tabbar .tab{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+  background:none; border:none; padding:9px 0 7px; cursor:pointer;
+  font-family:inherit; color:var(--soft);
+}
+#tabbar .tab .material-symbols-rounded{font-size:22px}
+#tabbar .tab i{font-size:10.5px; font-style:normal; font-weight:600; letter-spacing:-.03em; white-space:nowrap}
+#tabbar .tab.on{color:var(--green)}
+main{padding-bottom:96px}
+
+/* 위로가기 */
+#totop{
+  position:fixed; right:16px; bottom:82px; z-index:19;
+  width:42px; height:42px; border-radius:21px; border:1px solid var(--line);
+  background:var(--card); color:var(--soft); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .18s;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+#totop.on{opacity:1; pointer-events:auto}
+
+/* ══════════ 검색 · 필터 ══════════ */
+.searchbar{
+  display:flex; align-items:center; gap:8px; background:var(--card);
+  border:1px solid var(--line); border-radius:8px; padding:0 12px; margin-bottom:10px;
+}
+.searchbar .material-symbols-rounded{font-size:19px; color:var(--soft)}
+.searchbar input{border:none; background:none; padding:11px 0; flex:1}
+.searchbar input:focus{outline:none}
+.chips{display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:4px; -webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto; padding:7px 13px; border-radius:16px; border:1px solid var(--line);
+  background:var(--card); color:var(--soft); font-size:12.5px; cursor:pointer; font-family:inherit;
+}
+.chip.on{background:var(--green); border-color:var(--green); color:#fff; font-weight:600}
+.sortrow{display:flex; align-items:center; gap:12px; margin:4px 0 10px}
+.slink{background:none; border:none; font-family:inherit; font-size:12.5px; color:var(--soft); cursor:pointer; padding:2px 0}
+.slink.on{color:var(--ink); font-weight:700; text-decoration:underline; text-underline-offset:3px}
+.sortrow .btn.small{margin-left:auto}
+/* 분류 제목 고정.
+   .grp 안에 갇혀 있어야 다음 분류가 올라올 때 이전 제목이 위로 밀려 사라진다.
+   상단 헤더 높이는 노치 여백을 포함해 계산한다. */
+.grp{position:relative}
+.grp + .grp{margin-top:14px}
+h3.gh.sticky{
+  position:sticky; top:calc(env(safe-area-inset-top) + 50px);
+  background:var(--bg); z-index:5; padding:9px 0 7px; margin:0 0 6px;
+}
+
+/* ══════════ 재료 자동완성 ══════════ */
+.ingwrap{position:relative; flex:1; min-width:0}
+.frow.ingrow{align-items:flex-start; flex-wrap:wrap}
+.sug{
+  position:relative; margin-top:5px; background:var(--card);
+  border:1px solid var(--green); border-radius:8px; padding:8px; width:100%;
+}
+.sughead{font-size:11.5px; color:var(--green); margin-bottom:6px; line-height:1.5}
+.sugi{
+  display:inline-block; margin:0 5px 5px 0; padding:6px 11px; border-radius:14px;
+  border:1px solid var(--line); background:var(--bg); color:var(--ink);
+  font-size:13px; font-family:inherit; cursor:pointer;
+}
+
+/* ══════════ 주간 조건 ══════════ */
+.cond{
+  display:flex; justify-content:space-between; align-items:center; width:100%;
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:12px 14px; margin-bottom:10px; font-family:inherit; font-size:13.5px;
+  color:var(--soft); cursor:pointer; text-align:left;
+}
+.cond b{color:var(--ink); font-weight:700}
+.cond.open{border-bottom-left-radius:0; border-bottom-right-radius:0; margin-bottom:0}
+
+/* ══════════ 오늘 화면 알림 ══════════ */
+.notice{
+  display:block; width:100%; text-align:left; font-family:inherit; font-size:13.5px;
+  line-height:1.6; padding:13px 14px; margin-bottom:8px; border-radius:8px;
+  border:none; cursor:pointer; background:var(--card);
+  border-left:4px solid var(--green); color:var(--ink);
+}
+.notice.soon{border-left-color:var(--yolk)}
+.notice.bad{border-left-color:var(--kimchi)}
+.notice.quiet{background:transparent; border:1px dashed var(--line); color:var(--soft)}
+.w90{width:92px; flex-shrink:0}
+.mini.on{border-color:var(--green); color:var(--green)}
+
+/* ══════════ 주 선택 ══════════ */
+.weekbar{
+  display:flex; align-items:center; gap:6px; background:var(--card);
+  border:1px solid var(--line); border-radius:10px; padding:6px; margin-bottom:10px;
+}
+.weekbar .wnav{
+  display:flex; align-items:center; gap:2px; flex-shrink:0;
+  padding:8px 10px; border-radius:8px;
+  border:1px solid var(--gold-light); background:rgba(196,154,60,.12);
+  color:var(--gold); cursor:pointer; font-family:inherit;
+}
+.weekbar .wnav .material-symbols-rounded{font-size:20px; line-height:1}
+.weekbar .wnav i{font-style:normal; font-size:11.5px; font-weight:700; color:var(--gold)}
+.weekbar .wnav:active{background:rgba(196,154,60,.28)}
+.weekbar .wlab{flex:1; text-align:center; line-height:1.35; min-width:0}
+.weekbar .wlab b{display:block; font-size:14.5px; font-weight:700; color:var(--ink)}
+.weekbar .wlab i{display:block; font-size:11.5px; font-style:normal; color:var(--gold); font-weight:700}
+
+/* 길게 누르는 동안 집히는 중이라는 신호 */
+.day-content.holding{
+  transform:scale(.985);
+  transition:transform .55s ease-out;
+}
+.day-content.holding .drag-handle{color:var(--gold)}
+
+/* ══════════════════════════════════
+   테마 고르기 — 메뉴 관리 > 테마
+   ══════════════════════════════════ */
+.thgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+@media (max-width:400px){.thgrid{grid-template-columns:1fr}}
+
+.thcard{
+  border:1px solid var(--line); border-radius:var(--card-r);
+  background:var(--card); overflow:hidden; cursor:pointer;
+  padding:0; text-align:left; font-family:inherit; width:100%;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.thcard:active{transform:scale(0.98)}
+.thcard.on{border-color:var(--accent); box-shadow:0 0 0 2px var(--accent)}
+
+/* 미리보기 — 실제 화면과 같은 순서로 헤더·카드·칩을 쌓는다 */
+.thprev{padding:0}
+.thprev .hd{padding:9px 11px; font-size:12px; font-weight:700}
+.thprev .bd{padding:9px 10px 11px}
+.thprev .mini{
+  background:#fff; border-radius:8px; padding:7px 9px; margin-bottom:6px;
+  font-size:11px; line-height:1.4;
+}
+.thprev .st{font-size:10px; margin-top:2px}
+.thprev .chips{display:flex; gap:5px}
+.thprev .chips span{
+  font-size:10px; padding:3px 9px; border-radius:50px; white-space:nowrap;
+}
+.thfoot{
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+  padding:9px 11px; border-top:1px solid var(--line);
+}
+.thfoot b{font-size:13px; font-weight:700; color:var(--ink)}
+.thfoot i{font-size:11px; font-style:normal; color:var(--soft)}
+.thfoot .now{
+  font-size:10px; font-weight:700; color:var(--accent);
+  background:var(--green-light); border-radius:50px; padding:2px 8px;
+}
+
+/* 색 고르기 */
+.cfs{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin-bottom:14px}
+.cf{
+  display:flex; align-items:center; gap:9px;
+  border:1px solid var(--line); border-radius:12px; padding:8px 10px;
+  background:var(--cool); cursor:pointer;
+}
+.cf input[type=color]{
+  width:34px; height:34px; flex:none; padding:0; cursor:pointer;
+  border:1px solid var(--line); border-radius:9px; background:none;
+}
+.cf input[type=color]::-webkit-color-swatch-wrapper{padding:2px}
+.cf input[type=color]::-webkit-color-swatch{border:none; border-radius:7px}
+.cf input[type=color]::-moz-color-swatch{border:none; border-radius:7px}
+.cf i{font-style:normal; font-size:13px; font-weight:600; color:var(--ink); flex:1; min-width:0}
+.cf b{font-size:10.5px; font-weight:600; color:var(--soft); letter-spacing:.02em}
+
+/* 줄 자리에서 바로 펴지는 재료 수정 폼 */
+.liedit{
+  padding:14px 16px; background:var(--green-wash);
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+}
+.liedit .fl{margin-bottom:10px}
+
+/* 목록 위쪽의 직접 추가 */
+.sortrow.qa{align-items:center}
+.sortrow.qa .dim{font-size:12.5px; line-height:1.4}
+.card.qaopen{margin-bottom:16px}
+.btn.ghost.small{padding:8px 16px; font-size:14px}
+.gh .warn{
+  font-size:11px; font-weight:700; color:var(--red);
+  background:var(--red-tint); border-radius:50px; padding:2px 8px; font-style:normal;
+}
