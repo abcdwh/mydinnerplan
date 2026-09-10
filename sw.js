@@ -1,6 +1,6 @@
-const V = "dinner-v8-1";
+const V = "dinner-v9";
 const FILES = ["./", "index.html", "styles.css", "themes.js", "drive.js", "data.js", "packs.js", "app.js",
-  "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+  "privacy.html", "terms.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(V).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
