@@ -10,7 +10,7 @@ const CATS = Object.keys(SHELF);
 const FRESH = {
   v: 2, weekStart: null, plan: null, fridge: [], checked: {}, extra: [],
   trash: [], loved: [], excluded: [], custom: [], edits: {}, prices: {},
-  onboarded: false, hideBase: false, plans: {}, items: [], lastBackup: null, archive: [], updatedAt: 0, settings: { sideDay: "수", outDay: "금", people: 3, useSoup: true, theme: DEFAULT_THEME, custom: null, drive: false },
+  onboarded: false, hideBase: false, plans: {}, items: [], lastBackup: null, archive: [], updatedAt: 0, settings: { sideDay: "수", outDay: "금", people: 3, useSoup: true, theme: DEFAULT_THEME, custom: null, drive: false, rules: null },
 };
 
 let S = loadState();
@@ -181,73 +181,121 @@ function ratingOf(id) {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
 }
 
+/* ── 식단 짜는 규칙 ──
+   사용자가 [식단 > 조건]에서 바꾼다. 저장값이 없으면 기본값을 쓴다. */
+const RULES_DEFAULT = {
+  soupRun: 2,      // 국 한 냄비로 며칠 먹나 (1·2·3)
+  wkMin: 30,       // 평일 조리 시간 상한(분)
+  weMin: 60,       // 주말 조리 시간 상한(분), 0이면 제한 없음
+  repeat: 2,       // 최근 몇 주 안에 먹은 메뉴를 빼나 (0이면 상관없음)
+  protMax: 2,      // 같은 주재료(돼지·소·닭 등) 한 주 최대 횟수 (0이면 상관없음)
+  fish: true,      // 생선 요리 주 1회 넣기
+  side: "daily",   // 곁들임: daily 매일 / alt 이틀에 한 번 / none 안 씀
+  fridge: true,    // 곧 상하는 재료를 쓰는 메뉴 먼저
+  favor: true,     // 별점·좋아요 높은 메뉴 자주
+  mix: "mid"       // 뽑는 방식: low 익숙한 메뉴 위주 / mid 골고루 / high 새로운 조합 많이
+};
+const rules = () => Object.assign({}, RULES_DEFAULT, S.settings.rules || {});
+
+/* 기준 주 이전 n주 안에 식탁에 올랐던 메뉴 id.
+   지난 메뉴 기록(archive)과 아직 기록으로 넘어가지 않은 주별 식단(plans)을 모두 본다. */
+function recentIds(wk, weeks) {
+  const ids = new Set();
+  if (!weeks) return ids;
+  const inWindow = (ws) => { const d = gap(ws, wk); return d > 0 && d <= weeks * 7; };
+  const add = (days) => DAYS.forEach((d) => { const p = days && days[d]; if (!p) return;
+    [p.main, p.side, p.soup && p.soup.id].forEach((id) => { if (id) ids.add(id); }); });
+  S.archive.forEach((w) => { if (inWindow(w.weekStart)) add(w.days); });
+  Object.keys(S.plans).forEach((ws) => { if (inWindow(ws)) add(S.plans[ws]); });
+  return ids;
+}
+
 /* ── 주간 식단 생성 ── */
 function generate() {
   const wk = targetWeek();
+  const R = rules();
+  const prevSame = planOf(wk);   // 다시 짜기라면 방금 것과는 다르게
   archiveWeek(wk);              // 그 주에 이미 있던 식단만 기록으로 넘긴다
   const { sideDay, outDay } = S.settings;
-  const expiring = S.fridge.filter((f) => leftOf(f) <= 2).map((f) => f.n);
-  const recent = new Set(S.archive.slice(-2).flatMap((w) => DAYS.map((d) => w.days[d]).filter(Boolean)
-    .flatMap((p) => [p.main, p.side, p.soup && p.soup.id])).filter(Boolean));
+  const expiring = R.fridge ? S.fridge.filter((f) => leftOf(f) <= 2).map((f) => f.n) : [];
+  const recent = recentIds(wk, R.repeat);
+  const again = new Set();
+  if (prevSame) DAYS.forEach((d) => { const p = prevSame[d]; if (!p) return;
+    [p.main, p.side, p.soup && p.soup.id].forEach((id) => { if (id) again.add(id); }); });
+  const noise = R.mix === "low" ? 0.9 : R.mix === "high" ? 5 : 2.5;
 
   const score = (r) => {
     const rt = ratingOf(r.id);
-    return Math.random() * 0.9
+    return Math.random() * noise
       + 2 * (r.ing || []).filter((i) => expiring.indexOf(i.n) > -1).length
-      + (S.loved.indexOf(r.id) > -1 ? 1.5 : 0)
-      + (rt === null ? 0 : (rt - 3) * 1.2)
-      - (recent.has(r.id) ? 2.5 : 0)
+      + (R.favor && S.loved.indexOf(r.id) > -1 ? 1.5 : 0)
+      + (R.favor && rt !== null ? (rt - 3) * 1.2 : 0)
+      - (recent.has(r.id) ? 8 : 0)        // 메뉴가 모자랄 때만 다시 나온다
+      - (again.has(r.id) ? 1.5 : 0)
       - (S.excluded.indexOf(r.id) > -1 ? 999 : 0);
   };
   const used = new Set();
   const pick = (list) => {
     const c = list.filter((r) => !used.has(r.id) && S.excluded.indexOf(r.id) === -1);
-    const src = c.length ? c : list;
+    const src = c.length ? c : list.filter((r) => S.excluded.indexOf(r.id) === -1);
     if (!src.length) return null;
     return src.slice().sort((a, b) => score(b) - score(a))[0];
+  };
+  const within = (r, weekend) => {
+    const cap = weekend ? R.weMin : R.wkMin;
+    return !cap || r.min <= cap;
   };
 
   const type = {};
   DAYS.forEach((d) => { type[d] = d === sideDay ? "반찬" : d === outDay ? "외식" : "집밥"; });
 
-  /* 국은 요일이 아니라 "국을 먹는 날의 개수"로 나눈다.
-     외식이 어느 요일이든, 한 냄비가 2~3일을 고르게 덮고 남는 한 끼가 생기지 않는다. */
+  /* 국은 요일이 아니라 "국을 먹는 날의 개수"를 냄비 수로 나눈다.
+     한 냄비가 며칠을 덮을지는 규칙(soupRun)으로 정한다. */
   const soupOf = {};
-  const SP = pool("soup");
+  const SP = pool("soup").filter((x) => S.excluded.indexOf(x.id) === -1);
   const soupDays = S.settings.useSoup === false ? [] : DAYS.filter((d) => type[d] !== "외식");
-  if (soupDays.length) {
-    const pots = Math.max(1, Math.ceil(soupDays.length / 3));
+  if (soupDays.length && SP.length) {
+    const pots = Math.max(1, Math.ceil(soupDays.length / R.soupRun));
     const sizes = [];
     for (let i = 0; i < pots; i++) {
       sizes.push(Math.floor(soupDays.length / pots) + (i < soupDays.length % pots ? 1 : 0));
     }
-    let at = 0;
+    let at = 0, last = null;
     sizes.forEach((size) => {
       const run = soupDays.slice(at, at + size); at += size;
-      const cookDay = run[0];
-      const weekend = DAYS.indexOf(cookDay) >= 5;
-      // 주말에 끓이는 냄비는 든든한 국, 평일에 끓이는 냄비는 25분 안쪽
-      const list = weekend ? SP.filter((x) => x.hearty) : SP.filter((x) => x.min <= 25);
+      const weekend = DAYS.indexOf(run[0]) >= 5;
+      let list = SP.filter((x) => within(x, weekend));
+      // 주말에 끓이는 냄비는 든든한 국이 있으면 그중에서
+      if (weekend && list.some((x) => x.hearty)) list = list.filter((x) => x.hearty);
+      if (!list.length) list = SP;
       // 조건에 맞는 국이 다 쓰였으면, 같은 국을 또 쓰기보다 조건을 풀어 다른 국을 고른다
-      const fresh = list.filter((x) => !used.has(x.id));
-      const s2 = pick(fresh.length ? fresh : (SP.filter((x) => !used.has(x.id)).length ? SP : list));
+      let cand = list.filter((x) => !used.has(x.id));
+      if (!cand.length) cand = SP.filter((x) => !used.has(x.id));
+      if (!cand.length) cand = SP.filter((x) => x.id !== last);   // 바로 앞 냄비와는 다르게
+      const s2 = pick(cand.length ? cand : SP);
       if (!s2) return;
-      used.add(s2.id);
+      used.add(s2.id); last = s2.id;
       run.forEach((d) => { soupOf[d] = { id: s2.id }; });
     });
   }
 
-  const plan = {}; const prot = {}; let fish = false;
+  const plan = {}; const prot = {}; let fish = false; let homeN = 0;
   const oneBowl = (id) => { const r = getR(id); return !!(r && r.solo); };
   DAYS.forEach((d, i) => {
     const weekend = i >= 5;
     if (type[d] !== "집밥") { plan[d] = { type: type[d], soup: soupOf[d] || null, main: null, side: null }; return; }
-    let list = pool("main").filter((m) => (weekend ? m.min <= 60 : m.min <= 30 && !m.w));
-    list = list.filter((m) => (prot[m.p] || 0) < 2);
-    if (!fish && i >= 3 && list.some((m) => m.p === "생선")) list = list.filter((m) => m.p === "생선");
+    let list = pool("main").filter((m) => within(m, weekend) && (weekend || !m.w));
+    // 주재료가 적혀 있지 않은 메뉴(직접 만든 메뉴 등)는 이 규칙에서 빠진다
+    if (R.protMax) list = list.filter((m) => !m.p || (prot[m.p] || 0) < R.protMax);
+    if (R.fish && !fish && i >= 3 && list.some((m) => m.p === "생선" && !used.has(m.id)))
+      list = list.filter((m) => m.p === "생선");
     const main = pick(list.length ? list : pool("main"));
-    if (main) { used.add(main.id); prot[main.p] = (prot[main.p] || 0) + 1; if (main.p === "생선") fish = true; }
-    const side = pick(pool("side")); if (side) used.add(side.id);
+    if (main) { used.add(main.id); if (main.p) prot[main.p] = (prot[main.p] || 0) + 1; if (main.p === "생선") fish = true; }
+    const wantSide = R.side === "daily" || (R.side === "alt" && homeN % 2 === 0);
+    const side = wantSide ? pick(pool("side").filter((x) => within(x, weekend)).length
+      ? pool("side").filter((x) => within(x, weekend)) : pool("side")) : null;
+    if (side) used.add(side.id);
+    homeN++;
     // 파스타·카레처럼 한 그릇으로 끝나는 메뉴에는 국을 붙이지 않는다
     const soup = (main && oneBowl(main.id)) ? null : (soupOf[d] || null);
     plan[d] = { type: "집밥", soup: soup, main: main ? main.id : null, side: side ? side.id : null };
@@ -257,6 +305,19 @@ function generate() {
   S.checked[wk] = {}; V.week = wk; prunePlans();
   save(); V.screen = "week"; V.open = null; render();
   toast("이번 주 식탁이 정해졌어요");
+}
+
+/* 지금 메뉴 수로 같은 메뉴가 몇 주 만에 돌아오는지 */
+function poolReport() {
+  const R = rules(), cs = S.settings;
+  const home = DAYS.filter((d) => d !== cs.sideDay && d !== cs.outDay).length;
+  const ok = (r) => S.excluded.indexOf(r.id) === -1;
+  const n = { soup: pool("soup").filter(ok).length, main: pool("main").filter(ok).length, side: pool("side").filter(ok).length };
+  const potN = cs.useSoup === false ? 0 : Math.ceil(DAYS.filter((d) => d !== cs.outDay).length / R.soupRun);
+  const sideN = R.side === "none" ? 0 : R.side === "alt" ? Math.ceil(home / 2) : home;
+  const cyc = (have, need) => (need ? Math.max(1, Math.floor(have / need)) : null);
+  return { n: n, need: { soup: potN, main: home, side: sideN },
+    weeks: { soup: cyc(n.soup, potN), main: cyc(n.main, home), side: cyc(n.side, sideN) } };
 }
 
 function archiveWeek(ws) {
@@ -408,6 +469,41 @@ function homeView() {
   return h;
 }
 
+/* 식단 짜는 규칙 편집 */
+function rulesHTML() {
+  const R = rules();
+  const row = (key, label, opts, hint) => `<div class="fl">${label}</div><div class="pills rp">` +
+    opts.map(([v, t]) => `<button class="pill${String(R[key]) === String(v) ? " on" : ""}" data-a="rule:${key}:${v}">${t}</button>`).join("") +
+    `</div>` + (hint ? `<p class="hint">${hint}</p>` : "");
+  const rp = poolReport();
+  const kinds = [["main", "메인"], ["soup", "국"], ["side", "곁들임"]]
+    .filter(([k]) => rp.need[k]);
+  const short = kinds.filter(([k]) => rp.weeks[k] <= R.repeat);
+  let h = `<div class="rulehead"><b>짜는 규칙</b>
+      <button class="mini" data-a="rulereset">기본값으로</button></div>
+    <div class="poolbox">
+      <div>지금 쓰는 메뉴 ` + kinds.map(([k, l]) => `${l} <b>${rp.n[k]}</b>개`).join(", ") + `</div>
+      <div class="hint" style="margin-top:4px">한 주에 ` + kinds.map(([k, l]) => `${l} ${rp.need[k]}개`).join(", ") +
+      `를 쓰니, ` + kinds.map(([k, l]) => `${l}은 약 <b>${rp.weeks[k]}주</b>`).join(", ") + ` 만에 같은 메뉴가 돌아와요.</div>` +
+      (short.length ? `<p class="hint warn">${short.map(([, l]) => l).join("·")} 메뉴가 모자라서 "${R.repeat}주 안 겹치기"를 다 지킬 수 없어요.
+        메뉴를 더 넣으면 식단이 훨씬 다양해져요.</p>` : "") +
+      (S.hideBase ? `<div class="acts"><button class="btn ghost" data-a="togglebase">기본 메뉴 46개도 함께 쓰기</button></div>` : "") +
+    `</div>`;
+  h += row("soupRun", "국 한 냄비로 며칠 먹을까요", [[1, "매일 다른 국"], [2, "2일"], [3, "3일"]],
+    "같은 국이 이어지는 날 수예요. 바로 다음 냄비는 되도록 다른 국으로 고릅니다.");
+  h += row("repeat", "최근에 먹은 메뉴 빼기", [[0, "상관없음"], [1, "1주"], [2, "2주"], [3, "3주"], [4, "4주"]],
+    "정한 기간 안에 먹은 메뉴는 메뉴가 모자랄 때만 다시 나와요.");
+  h += row("mix", "메뉴 고르는 방식", [["low", "익숙한 것"], ["mid", "골고루"], ["high", "새로운 조합"]]);
+  h += row("wkMin", "평일 조리 시간", [[15, "15분"], [20, "20분"], [30, "30분"], [45, "45분"]]);
+  h += row("weMin", "주말 조리 시간", [[30, "30분"], [60, "1시간"], [90, "1시간 반"], [0, "제한 없음"]]);
+  h += row("side", "곁들임", [["daily", "매일"], ["alt", "이틀에 한 번"], ["none", "안 씀"]]);
+  h += row("protMax", "같은 주재료(돼지·소·닭 등) 한 주에", [[1, "1번까지"], [2, "2번까지"], [3, "3번까지"], [0, "상관없음"]]);
+  h += row("fish", "생선 요리 주 1회 넣기", [[true, "넣기"], [false, "안 넣기"]]);
+  h += row("fridge", "곧 상하는 재료 먼저 쓰기", [[true, "켜기"], [false, "끄기"]]);
+  h += row("favor", "별점·좋아요 높은 메뉴 자주", [[true, "켜기"], [false, "끄기"]]);
+  return h;
+}
+
 function weekView() {
   const plan = curPlan();
   if (!plan) return weekBar() +
@@ -417,7 +513,7 @@ function weekView() {
   const ti = todayIdx(), fresh = targetWeek() === thisWeek();
   const cs = S.settings;
   let h = weekBar() + `<button class="cond${V.cond ? " open" : ""}" data-a="cond">
-      <span><b>${cs.people}명</b> · 반찬 <b>${cs.sideDay}</b> · 외식 <b>${cs.outDay}</b>${cs.useSoup === false ? " · 국 없이" : ""}</span>
+      <span><b>${cs.people}명</b> · 반찬 <b>${cs.sideDay}</b> · 외식 <b>${cs.outDay}</b>${cs.useSoup === false ? " · 국 없이" : " · 국 <b>" + rules().soupRun + "일</b>씩"}</span>
       <span class="ar">${V.cond ? "⌄" : "›"}</span></button>`;
   if (V.cond) {
     h += `<div class="card pad">`;
@@ -430,7 +526,7 @@ function weekView() {
     h += `<div class="fl">국·찌개</div><div class="pills">
       <button class="pill${cs.useSoup !== false ? " on" : ""}" data-a="cfg:useSoup:on">쓴다</button>
       <button class="pill${cs.useSoup === false ? " on" : ""}" data-a="cfg:useSoup:off">안 쓴다</button></div>
-      <p class="hint">국을 안 쓰면 메인과 곁들임만 배정합니다. 양식 위주거나 혼자 드시는 경우에 편합니다.</p>
+      <p class="hint">국을 안 쓰면 메인과 곁들임만 배정합니다. 양식 위주거나 혼자 드시는 경우에 편합니다.</p>` + rulesHTML() + `
       <div class="acts"><button class="btn" data-a="gen">이 조건으로 다시 짜기</button></div></div>`;
   }
   h += `<div class="bar"><span>메뉴 원가 합계</span>
@@ -1184,6 +1280,12 @@ document.addEventListener("click", (e) => {
       pl[x] = p; save();
     } else toast("먼저 이 주 식단을 짜 주세요");
   }
+  else if (a === "rule") {
+    const cur = Object.assign({}, S.settings.rules || {});
+    cur[x] = y === "true" ? true : y === "false" ? false : isNaN(Number(y)) ? y : Number(y);
+    S.settings.rules = cur; save();
+  }
+  else if (a === "rulereset") { S.settings.rules = null; save(); toast("규칙을 기본값으로 돌렸어요"); }
   else if (a === "cfg") {
     S.settings[x] = x === "people" ? Number(y) : x === "useSoup" ? (y === "on") : y;
     save();
@@ -1406,7 +1508,64 @@ render();
 // drive.js를 못 불러와도 앱은 그대로 돌아가야 한다
 if (typeof driveBoot === "function") driveBoot();
 pushGuard();
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+/* ══ 새 버전 자동 반영 ══
+   설치한 앱은 백그라운드에 머물다 다시 켜질 뿐, 페이지를 새로 읽지 않는 경우가 많다.
+   그래서 앱이 다시 화면에 나올 때마다 서버의 파일이 바뀌었는지 확인하고,
+   바뀌었으면 한 번 새로 고친다. 입력 중이면 기다렸다가 다음에 연다. */
+let swReg = null, updPending = false, lastCheck = 0, baseStamp = null;
+const WATCH = ["index.html", "app.js", "styles.css", "data.js", "packs.js", "themes.js", "drive.js"];
+
+function deployStamp() {
+  // HEAD 요청은 서비스 워커를 거치지 않고 서버로 바로 간다
+  return Promise.all(WATCH.map((f) => fetch(f, { method: "HEAD", cache: "no-store" })
+    .then((r) => (r.ok ? (r.headers.get("etag") || r.headers.get("last-modified") || "") : ""))
+    .catch(() => null)))
+    .then((xs) => (xs.some((x) => x === null) || xs.every((x) => !x) ? null : xs.join("|")));
+}
+function busyEditing() {
+  const el = document.activeElement;
+  return !!(V.form || V.itemForm || (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));
+}
+function applyUpdate() {
+  if (busyEditing() || document.visibilityState !== "visible") { updPending = true; return; }
+  // 새로 고침이 되풀이되지 않게 한 번 막아 둔다
+  const last = Number(sessionStorage.getItem("upd-at") || 0);
+  if (Date.now() - last < 15000) return;
+  sessionStorage.setItem("upd-at", String(Date.now()));
+  sessionStorage.setItem("upd-screen", JSON.stringify({ screen: V.screen, sub: V.sub, week: V.week }));
+  location.reload();
+}
+function checkUpdate(force) {
+  if (!force && Date.now() - lastCheck < 20000) return;
+  lastCheck = Date.now();
+  if (swReg) swReg.update().catch(() => {});
+  deployStamp().then((st) => {
+    if (!st) return;                       // 오프라인이거나 서버가 표시를 안 주면 넘어간다
+    if (baseStamp === null) { baseStamp = st; return; }
+    if (st !== baseStamp) applyUpdate();
+  });
+}
+// 업데이트로 새로 고쳤다면 보던 화면으로 돌아간다
+try {
+  const back = JSON.parse(sessionStorage.getItem("upd-screen") || "null");
+  if (back) { sessionStorage.removeItem("upd-screen"); Object.assign(V, back); render(); toast("새 버전으로 바뀌었어요"); }
+} catch (e) {}
+
+if ("serviceWorker" in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+    .then((reg) => { swReg = reg; }).catch(() => {});
+  // 서비스 워커 자체가 바뀐 경우 (처음 설치 때는 제외)
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) applyUpdate(); });
+}
+checkUpdate(true);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (updPending) { updPending = false; applyUpdate(); return; }
+  checkUpdate(false);
+});
+window.addEventListener("focus", () => checkUpdate(false));
+window.addEventListener("pageshow", (e) => { if (e.persisted) checkUpdate(true); });
 
 /* ══ 드래그 앤 드롭 — 요일 메뉴 교환 (재생목록 스타일) ══ */
 /* 드래그 상태는 모듈 스코프에 둔다.
